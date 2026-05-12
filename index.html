@@ -1,0 +1,189 @@
+<!DOCTYPE html><html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GREEN VEG Billing</title><style>
+body{font-family:Arial;background:#e8f5e9;padding:10px}
+.container{background:white;padding:15px;border-radius:10px;max-width:520px;margin:auto}
+h2{text-align:center;color:green}
+.full{width:100%;padding:10px;margin-top:8px;font-size:16px}
+.small{width:48%;padding:10px;margin-top:8px;font-size:16px}
+.row{display:flex;gap:4%}
+button{width:100%;padding:12px;margin-top:10px;font-size:16px;background:green;color:white;border:none;border-radius:6px;cursor:pointer}
+.reset{background:#c0392b}
+.save{background:#2e6cc5}
+.report{background:#6c8e00}
+table{width:100%;margin-top:15px;border-collapse:collapse}
+th,td{border:1px solid #ccc;padding:8px;text-align:center}
+.total{font-size:20px;font-weight:bold;margin-top:15px;text-align:center}
+.history{margin-top:20px;background:#f5f5f5;padding:10px;border-radius:8px}
+.billbox{border:1px solid #ddd;padding:8px;margin-top:8px;background:white}
+</style></head><body><div class="container"><h2>GREEN VEG Billing</h2><div class="row">
+<input class="small" id="customer" placeholder="Customer name">
+<input class="small" id="phone" placeholder="Phone number">
+</div><select class="full" id="item">
+<option value="20">Tamater(₹20/kg)</option>
+<option value="15">Potato (₹15/kg)</option>
+<option value="20">Onion (₹20/kg)</option>
+<option value="60">Karela (₹60/kg)</option>
+<option value="100">Mirch (₹100/kg)</option>
+<option value="40">baigan(₹40/kg)</option>
+<option value="100">Bhindi(₹100/kg)</option>
+<option value="40">khira  (₹40/kg)</option>
+<option value="30">Aadi(₹30/kg)</option>
+<option value="100">Porwal (₹100/kg)</option>
+<option value="80">Lahsun(₹80/kg)</option>
+<option value="20">Kadu (₹20/piece)</option>
+<option value="10">Nimbu(₹10/piece)</option>
+</select><div class="row">
+<select class="small" id="unit">
+<option value="kg">KG</option>
+<option value="g">Gram</option>
+<option value="piece">Piece</option>
+</select><input class="small" type="number" id="weight" placeholder="Qty">
+</div><button onclick="addItem()">Add Item</button>
+
+<table id="bill">
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Amount</th>
+</tr>
+</table><div class="total">
+Total ₹ <span id="total">0</span>
+</div><button class="save" onclick="saveBill()">Save Customer Bill</button>
+
+<button class="reset" onclick="newCustomer()">New Customer</button>
+
+<button class="report" onclick="toggleReport()">Show All Bills</button>
+
+<div class="history" id="reportBox" style="display:none">
+<h3>All Customer Bills</h3>
+<div id="reportList"></div>
+</div></div><script>
+
+let total = 0;
+let items = [];
+
+function addItem(){
+
+let itemSelect=document.getElementById("item");
+let itemName=itemSelect.options[itemSelect.selectedIndex].text;
+let price=parseFloat(itemSelect.value);
+
+let qty=parseFloat(document.getElementById("weight").value);
+let unit=document.getElementById("unit").value;
+
+if(!qty){alert("Enter quantity");return}
+
+let amount;
+
+if(unit==="kg"){amount=price*qty}
+else if(unit==="g"){amount=(price*qty)/1000}
+else{amount=price*qty}
+
+items.push({name:itemName,qty:qty+" "+unit,amount:amount});
+
+total+=amount;
+
+let table=document.getElementById("bill");
+let row=table.insertRow();
+
+row.insertCell(0).innerText=itemName;
+row.insertCell(1).innerText=qty+" "+unit;
+row.insertCell(2).innerText="₹ "+amount.toFixed(2);
+
+document.getElementById("total").innerText=total.toFixed(2);
+
+document.getElementById("weight").value="";
+}
+
+function newCustomer(){
+
+document.getElementById("bill").innerHTML=`
+<tr>
+<th>Item</th>
+<th>Qty</th>
+<th>Amount</th>
+</tr>`;
+
+total=0;
+items=[];
+
+document.getElementById("total").innerText="0";
+
+document.getElementById("customer").value="";
+
+document.getElementById("phone").value="";
+}
+
+function saveBill(){
+
+let name=document.getElementById("customer").value;
+let phone=document.getElementById("phone").value;
+
+if(!name){alert("Enter customer name");return}
+
+let history=JSON.parse(localStorage.getItem("bills")||"[]");
+
+history.push({
+name:name,
+phone:phone,
+items:items,
+total:total,
+time:new Date().toLocaleString()
+});
+
+localStorage.setItem("bills",JSON.stringify(history));
+
+alert("Bill saved");
+
+newCustomer();
+
+loadReport();
+}
+
+function toggleReport(){
+
+let box=document.getElementById("reportBox");
+
+if(box.style.display==="none"){
+box.style.display="block";
+loadReport();
+}else{
+box.style.display="none";
+}
+}
+
+function loadReport(){
+
+let report=document.getElementById("reportList");
+report.innerHTML="";
+
+let history=JSON.parse(localStorage.getItem("bills")||"[]");
+
+history.forEach(b=>{
+
+let div=document.createElement("div");
+div.className="billbox";
+
+let html=`<b>${b.name}</b> | ${b.phone}<br>
+Date: ${b.time}<br>`;
+
+b.items.forEach(i=>{
+html+=`${i.name} - ${i.qty} - ₹${i.amount.toFixed(2)}<br>`;
+});
+
+html+=`<b>Total ₹${b.total}</b>`;
+
+div.innerHTML=html;
+
+report.appendChild(div);
+
+});
+
+}
+
+loadReport();
+
+</script></body>
+</html>
